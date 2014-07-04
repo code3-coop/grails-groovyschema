@@ -26,10 +26,10 @@ class GroovyschemaGrailsPlugin {
   // def developers = [ [ name: "Joe Bloggs", email: "joe@bloggs.net" ]]
 
   // Location of the plugin's issue tracker.
-  def issueManagement = [ system: "github", url: "http://github.com/code3/grails-groovyschema/issues" ]
+  def issueManagement = [ system: "github", url: "https://github.com/code3-coop/grails-groovyschema/issues" ]
 
   // Online location of the plugin's browseable source code.
-  def scm = [ url: "http://github.com/code3/grails-groovyschema" ]
+  def scm = [ url: "https://github.com/code3-coop/grails-groovyschema" ]
 
   def doWithWebDescriptor = { xml ->
     // TODO Implement additions to web.xml (optional), this event occurs before
