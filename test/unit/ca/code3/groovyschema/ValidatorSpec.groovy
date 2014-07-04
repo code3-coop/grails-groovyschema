@@ -2,6 +2,7 @@ package ca.code3.groovyschema
 
 import groovy.util.*
 import spock.lang.*
+import org.codehaus.groovy.grails.web.json.*
 
 class ValidatorSpec extends Specification {
   def validator
@@ -493,6 +494,30 @@ class ValidatorSpec extends Specification {
     5        | 1
     6        | 1
     11       | 0
+  }
+
+  def "it works with instances of type JSONObject"() {
+    // If 'a' is present the instance must have a `b property of type `number`
+    setup:
+    def schema = [
+      dependencies: [
+        a: [
+          properties: [
+            b: [type:'number', required:true]
+          ]
+        ]
+      ]
+    ]
+
+    expect:
+    validator.validate(instance, schema).size() == errCount
+
+    where:
+    instance                     | errCount
+    new JSONObject([a:1, b:2])   | 0
+    new JSONObject([b:2])        | 0
+    new JSONObject([a:1])        | 1
+    new JSONObject([a:1, b:'s']) | 1
   }
 
   def "it validates nested and mixed instances"() {
