@@ -9,7 +9,11 @@ It is meant to be used with
 [JsonSlurper](http://groovy.codehaus.org/gapi/groovy/json/JsonSlurper.html) when
 validating incoming JSON content in REST API implementations.
 
-## Installing
+## Installing (pending approval)
+
+```groovy
+compile ':groovyschema:0.1'
+```
 
 ## Usage
 
@@ -33,7 +37,6 @@ class SomeController {
 
   def someAction() {
     def payload = request.JSON
-    println payload
     def validationErrors = groovySchemaService.validate(payload, CONTACT_SCHEMA)
     if (validationErrors) {
       render([
@@ -47,7 +50,7 @@ class SomeController {
     }
   }
 
-  // If `parseRequest:false` is set for this route:
+  // If `parseRequest:false` is set for this route in `UrlMappings.groovy`:
   def someOtherAction() {
     def payload = new groovy.json.JsonSlurper().parseText(request.getReader().text)
     // ...
