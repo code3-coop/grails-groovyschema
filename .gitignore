@@ -1,1 +1,8 @@
-target
+/target
+/stacktrace.log
+/test/reports
+/logs
+/*.war
+/*.zip
+/*.sha1
+/plugin.xml
