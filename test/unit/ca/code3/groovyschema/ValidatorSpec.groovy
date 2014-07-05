@@ -623,4 +623,14 @@ class ValidatorSpec extends Specification {
     [a:[[b:1]], d:0]              | 0
   }
 
+  def "it meta-meta validates"() {
+    when:
+    def metaMetaErrors = validator.validate(Validator.META_SCHEMA, Validator.META_SCHEMA)
+    def metaErrors = validator.validate(Validator.ERRORS_SCHEMA, Validator.META_SCHEMA)
+
+    then:
+    metaMetaErrors.size() == 0
+    metaErrors.size() == 0
+  }
+
 }
