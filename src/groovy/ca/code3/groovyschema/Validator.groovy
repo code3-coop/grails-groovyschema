@@ -382,7 +382,7 @@ class Validator {
       [
         instance: instance,
         schema: schema,
-        message: message,
+        message: message.toString(),
       ]
     }
   }

@@ -58,6 +58,26 @@ class SomeController {
 }
 ```
 
+The `validationErrors` array complies to:
+
+```groovy
+[
+  type: 'array',
+  minItems: 0,
+  required: true,
+  items: [
+    type: 'object',
+    required: true,
+    additionalProperties: false,
+    properties: [
+      instance: [type:'any'], // the validated (sub-)instance e.g. "abc"
+      schema: [type:'object', required:true], // the associated (sub-)schema e.g. [format:'email']
+      message: [type:'string', required:true] // an error message e.g. "does not match 'email' pattern"
+    ]
+  ]
+]
+```
+
 ## Non type-specific validations attributes
 
 ### required
