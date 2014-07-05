@@ -10,7 +10,7 @@ class Validator {
       def validator = this["validate${key.capitalize()}"]
       if (validator) {
         def err = validator(instance, schema)
-        (err instanceof String) ? mkError(err, instance, schema) : err
+        (err instanceof String || err instanceof GString) ? mkError(err, instance, schema) : err
       } else {
         throw new IllegalArgumentException("Unknown validation attribute '${key}'")
       }
@@ -37,7 +37,7 @@ class Validator {
     def errors = collectValidations(instance, schema.anyOf).findAll()
 
     if (errors.size() == schema.anyOf.size()) {
-      "does not comply to any of the given schema"
+      "does not comply to any of the given schemas"
     }
   }
 
@@ -49,7 +49,7 @@ class Validator {
     def errors = collectValidations(instance, schema.oneOf).findAll()
 
     if (schema.oneOf.size() - errors.size() != 1) {
-      "does not comply to exactly one of the given schema"
+      "does not comply to exactly one of the given schemas"
     }
   }
 
@@ -80,7 +80,7 @@ class Validator {
       if (dependency != null) {
         if (description instanceof String || description instanceof List) {
           if (! description.every { instance[it] != null }) {
-            mkError("${property} depends on the presence of ${description}", instance, schema)
+            mkError("'${property}' depends on the presence of '${description}'", instance, schema)
           }
         } else {
           this.validate(instance, description)
@@ -94,7 +94,7 @@ class Validator {
   // message, if any.
 
   private validateEnum = { instance, schema ->
-    if (! schema.enum.any { deepEqual(it, instance) }) {
+    if (! schema.enum.any { deepEqual(it, instance) } && instance != null) {
       "is not one of ${schema.enum}"
     }
   }
@@ -105,7 +105,7 @@ class Validator {
 
   private validateFixed = { instance, schema ->
     if (! deepEqual(schema.fixed, instance)) {
-      "is not ${schema.fixed}"
+      "is not '${schema.fixed}'"
     }
   }
 
@@ -241,7 +241,7 @@ class Validator {
     def format = this.formats[schema.format]
     if (format) {
       if (!(instance ==~ format)) {
-        "does not conform to to '${schema.format}' format"
+        "does not match '${schema.format}' format"
       }
     } else {
       throw new IllegalArgumentException("Unknown format '${schema.format}'")

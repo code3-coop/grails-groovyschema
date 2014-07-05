@@ -11,6 +11,39 @@ class ValidatorSpec extends Specification {
     validator = new Validator()
   }
 
+  def "it returns the correct error message"() {
+    expect:
+    def errors = validator.validate(instance, schema)
+    errors.size() == 1
+    errors[0].message == message
+    errors[0].schema == schema
+    errors[0].instance == instance
+
+    where:
+    schema                            | instance | message
+    [type:'string']                   | 0        | "is not of type 'string'"
+    [divisibleBy:2]                   | 3        | "is not divisible by 2"
+    [maximum:0]                       | 1        | "is greater than 0"
+    [minimum:1]                       | 0        | "is less than 1"
+    [maxLength:0]                     | "a"      | "exceeds maximum length of 0"
+    [minLength:1]                     | ""       | "does not meet minimum length of 1"
+    [maxItems:0]                      | [1]      | "exceeds maximum length of 0"
+    [minItems:1]                      | []       | "does not meet minimum length of 1"
+    [format:'email']                  | ""       | "does not match 'email' format"
+    [pattern:/a+/]                    | "b"      | "does not match pattern /a+/"
+    [required:true]                   | null     | "is required"
+    [additionalProperties:false]      | [a:1]    | "additional properties ([a]) are not allowed"
+    [additionalItems:false, items:[]] | [1]      | "additional items are not allowed"
+    [uniqueItems:true]                | [1, 1]   | "contains duplicate items"
+    [fixed:"a"]                       | "b"      | "is not 'a'"
+    [enum:['a', 'b']]                 | ''       | "is not one of [a, b]"
+    [dependencies:[a:'b']]            | [a:1]    | "'a' depends on the presence of 'b'"
+    [not:[fixed:'a']]                 | 'a'      | "complies to one or more prohibited schemas"
+    [oneOf:[[fixed:'a']]]             | 'b'      | "does not comply to exactly one of the given schemas"
+    [anyOf:[[fixed:'a']]]             | 'b'      | "does not comply to any of the given schemas"
+    [allOf:[[fixed:'a']]]             | 'b'      | "does not comply to all of the given schemas"
+  }
+
   def "it validates the `type` attribute"() {
     expect:
     validator.validate(instance, schema).size() == errCount
@@ -336,6 +369,20 @@ class ValidatorSpec extends Specification {
     [[1,2], [3,4], 5] | 1        | 1
   }
 
+  def "it skips enum validation when instance is null"() {
+    setup:
+    def schema = [
+      enum: enumeration,
+    ]
+
+    expect:
+    validator.validate(instance, schema).size() == errCount
+
+    where:
+    enumeration | instance | errCount
+    [1,2,3]     | null     | 0
+  }
+
   def "it validates the `fixed` attribute"() {
     setup:
     def schema = [
@@ -575,4 +622,5 @@ class ValidatorSpec extends Specification {
     [a:[[b:1]], c:1, d:0]         | 1
     [a:[[b:1]], d:0]              | 0
   }
+
 }
