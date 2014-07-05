@@ -2,11 +2,15 @@ package ca.code3.groovyschema
 
 class Validator {
 
+  def isMetaValidating = true
+
   // Takes in a `schema` and a potential `instance` of it. Validates the top
   // level constraints.
 
   def validate(instance, schema) {
-    schema.findAll(relevantProperties).collect { key, val ->
+    if (isMetaValidating) { metaValidate(schema, META_SCHEMA) }
+
+    def errors = schema.findAll(relevantProperties).collect { key, val ->
       def validator = this["validate${key.capitalize()}"]
       if (validator) {
         def err = validator(instance, schema)
@@ -15,6 +19,9 @@ class Validator {
         throw new IllegalArgumentException("Unknown validation attribute '${key}'")
       }
     }.findAll().flatten()
+
+    if (isMetaValidating) { metaValidate(errors, ERRORS_SCHEMA) }
+    errors
   }
 
   // Takes in a `schema` and a potential `instance` of it. Validates the
@@ -436,4 +443,123 @@ class Validator {
       a == b
     }
   }
+
+  private metaValidate(schemaInstance, metaSchema) {
+    def metaValidator = new Validator(isMetaValidating:false)
+    def metaErrors = metaValidator.validate(schemaInstance, metaSchema)
+    if (metaErrors.size()) {
+      throw new IllegalArgumentException("schema instance does not comply to metaschema")
+    }
+  }
+
+  static final ERRORS_SCHEMA = [
+    type: 'array',
+    minItems: 0,
+    required: true,
+    items: [
+      type: 'object',
+      required: true,
+      additionalProperties: false,
+      properties: [
+        instance: [type:'any'], // the validated (sub-)instance e.g. "abc"
+        schema: [type:'object', required:true], // the associated (sub-)schema e.g. [format:'email']
+        message: [type:'string', required:true] // an error message e.g. "does not match 'email' pattern"
+      ]
+    ]
+  ]
+
+  static final META_SCHEMA = [
+    type: 'object',
+    required: true,
+    additionalProperties: false,
+    properties: [
+
+      required: [type:'boolean'],
+
+      type: [type:'string', enum:['string', 'number', 'integer', 'boolean', 'array', 'null', 'any', 'object']],
+
+      enum: [type:'array', minItems:1, items:[type:'any']],
+
+      fixed: [type:'any'],
+
+      pattern: [type:'string'],
+
+      format: [type:'string', enum:['date-time', 'email', 'hostname', 'ipv4', 'ipv6', 'uri']],
+
+      minLength: [type:'number', minimum:0],
+
+      maxLength: [type:'number', minimum:0],
+
+      minimum: [type:'number'],
+
+      maximum: [type:'number'],
+
+      divisibleBy: [type:'number'],
+
+      properties: [
+        type: 'object',
+        patternProperties: [
+          /.+/: [type:'object'] // in fact, all values of the `property` object should comply to this metaschema.
+        ]
+      ],
+
+      additionalProperties: [
+        anyOf: [
+          [type:'boolean'],
+          [type:'null'],
+          [type:'string'],
+          [type:'array', items:[type:'string']],
+          [type:'object'] // in fact, the schema for all additional properties
+        ]
+      ],
+
+      patternProperties: [
+        type: 'object',
+        patternProperties: [
+          /.+/: [type:'object'] // in fact, all values of the `property` object should comply to this metaschema.
+        ]
+      ],
+
+      dependencies: [
+        type: 'object',
+        patternProperties: [
+          /.+/: [
+            anyOf: [
+              [type:'string'],
+              [type:'array', minItems:1, items:[type:'string']],
+              [type:'object'] // in fact, the schema for the dependency
+            ]
+          ]
+        ]
+      ],
+
+      items: [
+        anyOf: [
+          [type:'object'], // in fact, the schema for all items
+          [type:'array', items:[type:'object']], // in fact, schemas for each item in the list
+        ]
+      ],
+
+      additionalItems: [type:'boolean'],
+
+      exclusiveMinimum: [type:'boolean'],
+
+      exclusiveMaximum: [type:'boolean'],
+
+      minItems: [type:'number', minimum:0],
+
+      maxItems: [type:'number', minimum:0],
+
+      uniqueItems: [type:'boolean'],
+
+      allOf: [type:'array', items:[type:'object']], // in fact, an array of schemas
+
+      anyOf: [type:'array', items:[type:'object']], // in fact, an array of schemas
+
+      oneOf: [type:'array', items:[type:'object']], // in fact, an array of schemas
+
+      not: [type:'array', items:[type:'object']], // in fact, an array of schemas
+    ]
+  ]
+
 }

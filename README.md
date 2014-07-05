@@ -78,6 +78,104 @@ The `validationErrors` array complies to:
 ]
 ```
 
+All schema objects must comply to:
+
+```groovy
+[
+  type: 'object',
+  required: true,
+  additionalProperties: false,
+  properties: [
+
+    required: [type:'boolean'],
+
+    type: [type:'string', enum:['string', 'number', 'integer', 'boolean', 'array', 'null', 'any', 'object']],
+
+    enum: [type:'array', minItems:1, items:[type:'any']],
+
+    fixed: [type:'any'],
+
+    pattern: [type:'string'],
+
+    format: [type:'string', enum:['date-time', 'email', 'hostname', 'ipv4', 'ipv6', 'uri']],
+
+    minLength: [type:'number', minimum:0],
+
+    maxLength: [type:'number', minimum:0],
+
+    minimum: [type:'number'],
+
+    maximum: [type:'number'],
+
+    divisibleBy: [type:'number'],
+
+    properties: [
+      type: 'object',
+      patternProperties: [
+        /.+/: [type:'object'] // in fact, all values of the `property` object should comply to this metaschema.
+      ]
+    ],
+
+    additionalProperties: [
+      anyOf: [
+        [type:'boolean'],
+        [type:'null'],
+        [type:'string'],
+        [type:'array', items:[type:'string']],
+        [type:'object'] // in fact, the schema for all additional properties
+      ]
+    ],
+
+    patternProperties: [
+      type: 'object',
+      patternProperties: [
+        /.+/: [type:'object'] // in fact, all values of the `property` object should comply to this metaschema.
+      ]
+    ],
+
+    dependencies: [
+      type: 'object',
+      patternProperties: [
+        /.+/: [
+          anyOf: [
+            [type:'string'],
+            [type:'array', minItems:1, items:[type:'string']],
+            [type:'object'] // in fact, the schema for the dependency
+          ]
+        ]
+      ]
+    ],
+
+    items: [
+      anyOf: [
+        [type:'object'], // in fact, the schema for all items
+        [type:'array', items:[type:'object']], // in fact, schemas for each item in the list
+      ]
+    ],
+
+    additionalItems: [type:'boolean'],
+
+    exclusiveMinimum: [type:'boolean'],
+
+    exclusiveMaximum: [type:'boolean'],
+
+    minItems: [type:'number', minimum:0],
+
+    maxItems: [type:'number', minimum:0],
+
+    uniqueItems: [type:'boolean'],
+
+    allOf: [type:'array', items:[type:'object']], // in fact, an array of schemas
+
+    anyOf: [type:'array', items:[type:'object']], // in fact, an array of schemas
+
+    oneOf: [type:'array', items:[type:'object']], // in fact, an array of schemas
+
+    not: [type:'array', items:[type:'object']], // in fact, an array of schemas
+  ]
+]
+```
+
 ## Non type-specific validations attributes
 
 ### required

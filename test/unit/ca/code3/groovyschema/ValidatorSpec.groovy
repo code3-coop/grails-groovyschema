@@ -12,32 +12,12 @@ class ValidatorSpec extends Specification {
   }
 
   def "it returns the correct error message"() {
-    setup:
-    def errorsSchema = [
-      type: 'array',
-      minItems: 0,
-      required: true,
-      items: [
-        type: 'object',
-        required: true,
-        additionalProperties: false,
-        properties: [
-          instance: [type:'any'], // the validated (sub-)instance e.g. "abc"
-          schema: [type:'object', required:true], // the associated (sub-)schema e.g. [format:'email']
-          message: [type:'string', required:true] // an error message e.g. "does not match 'email' pattern"
-        ]
-      ]
-    ]
-
     expect:
     def errors = validator.validate(instance, schema)
     errors.size() == 1
     errors[0].message == message
     errors[0].schema == schema
     errors[0].instance == instance
-
-    def metaErrors = validator.validate(errors, errorsSchema)
-    metaErrors.size() == 0
 
     where:
     schema                            | instance | message
@@ -58,7 +38,7 @@ class ValidatorSpec extends Specification {
     [fixed:"a"]                       | "b"      | "is not 'a'"
     [enum:['a', 'b']]                 | ''       | "is not one of [a, b]"
     [dependencies:[a:'b']]            | [a:1]    | "'a' depends on the presence of 'b'"
-    [not:[fixed:'a']]                 | 'a'      | "complies to one or more prohibited schemas"
+    [not:[[fixed:'a']]]               | 'a'      | "complies to one or more prohibited schemas"
     [oneOf:[[fixed:'a']]]             | 'b'      | "does not comply to exactly one of the given schemas"
     [anyOf:[[fixed:'a']]]             | 'b'      | "does not comply to any of the given schemas"
     [allOf:[[fixed:'a']]]             | 'b'      | "does not comply to all of the given schemas"
