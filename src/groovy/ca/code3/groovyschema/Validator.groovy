@@ -463,7 +463,33 @@ class Validator {
       properties: [
         instance: [type:'any'], // the validated (sub-)instance e.g. "abc"
         schema: [type:'object', required:true], // the associated (sub-)schema e.g. [format:'email']
-        message: [type:'string', required:true] // an error message e.g. "does not match 'email' pattern"
+        message: [
+          type: 'string',
+          required: true,
+          enum: [
+            "groovyschema.additionalItems.message",
+            "groovyschema.additionalProperties.message",
+            "groovyschema.allOf.message",
+            "groovyschema.anyOf.message",
+            "groovyschema.dependencies.message",
+            "groovyschema.divisibleBy.message",
+            "groovyschema.enum.message",
+            "groovyschema.fixed.message",
+            "groovyschema.format.message",
+            "groovyschema.maxItems.message",
+            "groovyschema.maxLength.message",
+            "groovyschema.maximum.message",
+            "groovyschema.minItems.message",
+            "groovyschema.minLength.message",
+            "groovyschema.minimum.message",
+            "groovyschema.not.message",
+            "groovyschema.oneOf.message",
+            "groovyschema.pattern.message",
+            "groovyschema.required.message",
+            "groovyschema.type.message",
+            "groovyschema.uniqueItems.message"
+          ]
+        ]
       ]
     ]
   ]
