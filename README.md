@@ -61,119 +61,123 @@ class SomeController {
 The `validationErrors` array complies to:
 
 ```groovy
-[
-  type: 'array',
-  minItems: 0,
-  required: true,
-  items: [
-    type: 'object',
+class Validator {
+
+  public static final ERRORS_SCHEMA = [
+    type: 'array',
+    minItems: 0,
     required: true,
-    additionalProperties: false,
-    properties: [
-      instance: [type:'any'], // the validated (sub-)instance e.g. "abc"
-      schema: [type:'object', required:true], // the associated (sub-)schema e.g. [format:'email']
-      message: [type:'string', required:true] // an error message e.g. "does not match 'email' pattern"
+    items: [
+      type: 'object',
+      required: true,
+      additionalProperties: false,
+      properties: [
+        instance: [type:'any'], // the validated (sub-)instance e.g. "abc"
+        schema: [type:'object', required:true], // the associated (sub-)schema e.g. [format:'email']
+        message: [type:'string', required:true] // an error message e.g. "does not match 'email' pattern"
+      ]
     ]
   ]
-]
 ```
 
 All schema objects must comply to:
 
 ```groovy
-[
-  type: 'object',
-  required: true,
-  additionalProperties: false,
-  properties: [
+class Validator {
 
-    required: [type:'boolean'],
-
-    type: [type:'string', enum:['string', 'number', 'integer', 'boolean', 'array', 'null', 'any', 'object']],
-
-    enum: [type:'array', minItems:1, items:[type:'any']],
-
-    fixed: [type:'any'],
-
-    pattern: [type:'string'],
-
-    format: [type:'string', enum:['date-time', 'email', 'hostname', 'ipv4', 'ipv6', 'uri']],
-
-    minLength: [type:'number', minimum:0],
-
-    maxLength: [type:'number', minimum:0],
-
-    minimum: [type:'number'],
-
-    maximum: [type:'number'],
-
-    divisibleBy: [type:'number'],
-
+  public static final META_SCHEMA = [
+    type: 'object',
+    required: true,
+    additionalProperties: false,
     properties: [
-      type: 'object',
-      patternProperties: [
-        /.+/: [type:'object'] // in fact, all values of the `property` object should comply to this metaschema.
-      ]
-    ],
 
-    additionalProperties: [
-      anyOf: [
-        [type:'boolean'],
-        [type:'null'],
-        [type:'string'],
-        [type:'array', items:[type:'string']],
-        [type:'object'] // in fact, the schema for all additional properties
-      ]
-    ],
+      required: [type:'boolean'],
 
-    patternProperties: [
-      type: 'object',
-      patternProperties: [
-        /.+/: [type:'object'] // in fact, all values of the `property` object should comply to this metaschema.
-      ]
-    ],
+      type: [type:'string', enum:['string', 'number', 'integer', 'boolean', 'array', 'null', 'any', 'object']],
 
-    dependencies: [
-      type: 'object',
+      enum: [type:'array', minItems:1, items:[type:'any']],
+
+      fixed: [type:'any'],
+
+      pattern: [type:'string'],
+
+      format: [type:'string', enum:['date-time', 'email', 'hostname', 'ipv4', 'ipv6', 'uri']],
+
+      minLength: [type:'number', minimum:0],
+
+      maxLength: [type:'number', minimum:0],
+
+      minimum: [type:'number'],
+
+      maximum: [type:'number'],
+
+      divisibleBy: [type:'number'],
+
+      properties: [
+        type: 'object',
+        patternProperties: [
+          /.+/: [type:'object'] // in fact, all values of the `property` object should comply to this metaschema.
+        ]
+      ],
+
+      additionalProperties: [
+        anyOf: [
+          [type:'boolean'],
+          [type:'null'],
+          [type:'string'],
+          [type:'array', items:[type:'string']],
+          [type:'object'] // in fact, the schema for all additional properties
+        ]
+      ],
+
       patternProperties: [
-        /.+/: [
-          anyOf: [
-            [type:'string'],
-            [type:'array', minItems:1, items:[type:'string']],
-            [type:'object'] // in fact, the schema for the dependency
+        type: 'object',
+        patternProperties: [
+          /.+/: [type:'object'] // in fact, all values of the `property` object should comply to this metaschema.
+        ]
+      ],
+
+      dependencies: [
+        type: 'object',
+        patternProperties: [
+          /.+/: [
+            anyOf: [
+              [type:'string'],
+              [type:'array', minItems:1, items:[type:'string']],
+              [type:'object'] // in fact, the schema for the dependency
+            ]
           ]
         ]
-      ]
-    ],
+      ],
 
-    items: [
-      anyOf: [
-        [type:'object'], // in fact, the schema for all items
-        [type:'array', items:[type:'object']], // in fact, schemas for each item in the list
-      ]
-    ],
+      items: [
+        anyOf: [
+          [type:'object'], // in fact, the schema for all items
+          [type:'array', items:[type:'object']], // in fact, schemas for each item in the list
+        ]
+      ],
 
-    additionalItems: [type:'boolean'],
+      additionalItems: [type:'boolean'],
 
-    exclusiveMinimum: [type:'boolean'],
+      exclusiveMinimum: [type:'boolean'],
 
-    exclusiveMaximum: [type:'boolean'],
+      exclusiveMaximum: [type:'boolean'],
 
-    minItems: [type:'number', minimum:0],
+      minItems: [type:'number', minimum:0],
 
-    maxItems: [type:'number', minimum:0],
+      maxItems: [type:'number', minimum:0],
 
-    uniqueItems: [type:'boolean'],
+      uniqueItems: [type:'boolean'],
 
-    allOf: [type:'array', items:[type:'object']], // in fact, an array of schemas
+      allOf: [type:'array', items:[type:'object']], // in fact, an array of schemas
 
-    anyOf: [type:'array', items:[type:'object']], // in fact, an array of schemas
+      anyOf: [type:'array', items:[type:'object']], // in fact, an array of schemas
 
-    oneOf: [type:'array', items:[type:'object']], // in fact, an array of schemas
+      oneOf: [type:'array', items:[type:'object']], // in fact, an array of schemas
 
-    not: [type:'array', items:[type:'object']], // in fact, an array of schemas
+      not: [type:'array', items:[type:'object']], // in fact, an array of schemas
+    ]
   ]
-]
 ```
 
 ## Non type-specific validations attributes

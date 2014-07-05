@@ -32,7 +32,7 @@ class Validator {
     def errors = collectValidations(instance, schema.allOf).findAll()
 
     if (errors.size() > 0) {
-      "does not comply to all of the given schemas"
+      "groovyschema.allOf.message"
     }
   }
 
@@ -44,7 +44,7 @@ class Validator {
     def errors = collectValidations(instance, schema.anyOf).findAll()
 
     if (errors.size() == schema.anyOf.size()) {
-      "does not comply to any of the given schemas"
+      "groovyschema.anyOf.message"
     }
   }
 
@@ -56,7 +56,7 @@ class Validator {
     def errors = collectValidations(instance, schema.oneOf).findAll()
 
     if (schema.oneOf.size() - errors.size() != 1) {
-      "does not comply to exactly one of the given schemas"
+      "groovyschema.oneOf.message"
     }
   }
 
@@ -69,7 +69,7 @@ class Validator {
     def errors = collectValidations(instance, prohibitedSchemas).findAll()
 
     if (errors.size() != prohibitedSchemas.size()) {
-      "complies to one or more prohibited schemas"
+      "groovyschema.not.message"
     }
   }
 
@@ -87,7 +87,7 @@ class Validator {
       if (dependency != null) {
         if (description instanceof String || description instanceof List) {
           if (! description.every { instance[it] != null }) {
-            mkError("'${property}' depends on the presence of '${description}'", instance, schema)
+            mkError("groovyschema.dependencies.message", instance, schema)
           }
         } else {
           this.validate(instance, description)
@@ -102,7 +102,7 @@ class Validator {
 
   private validateEnum = { instance, schema ->
     if (! schema.enum.any { deepEqual(it, instance) } && instance != null) {
-      "is not one of ${schema.enum}"
+      "groovyschema.enum.message"
     }
   }
 
@@ -112,7 +112,7 @@ class Validator {
 
   private validateFixed = { instance, schema ->
     if (! deepEqual(schema.fixed, instance)) {
-      "is not '${schema.fixed}'"
+      "groovyschema.fixed.message"
     }
   }
 
@@ -126,7 +126,7 @@ class Validator {
     def uniqued = instance.unique(false, { a, b -> deepEqual(a, b) ? 0 : 1 })
 
     if (instance.size() != uniqued.size()) {
-      "contains duplicate items"
+      "groovyschema.uniqueItems.message"
     }
   }
 
@@ -145,7 +145,7 @@ class Validator {
       def itemSchema = schema.items
       items.collect { item -> this.validate(item, itemSchema) }.findAll().flatten()
     } else if (items.size() > schema.items.size() && !schema.additionalItems) {
-      "additional items are not allowed"
+      "groovyschema.additionalItems.message"
     } else {
       def schemas = schema.items ?: []
       [schemas, items].transpose().collect {
@@ -192,7 +192,7 @@ class Validator {
       def additional = given - possible
 
       if (additional.size() != 0) {
-       "additional properties (${additional}) are not allowed"
+       "groovyschema.additionalProperties.message"
       }
     } else {
       def additionalPropertySchema = schema.additionalProperties
@@ -222,7 +222,7 @@ class Validator {
 
   private validateRequired = { instance, schema ->
     if (schema.required && instance == null) {
-      "is required"
+      "groovyschema.required.message"
     }
   }
 
@@ -234,7 +234,7 @@ class Validator {
     if (!(instance instanceof String)) return
 
     if (!(instance ==~ schema.pattern)) {
-      "does not match pattern /${schema.pattern}/"
+      "groovyschema.pattern.message"
     }
   }
 
@@ -248,7 +248,7 @@ class Validator {
     def format = this.formats[schema.format]
     if (format) {
       if (!(instance ==~ format)) {
-        "does not match '${schema.format}' format"
+        "groovyschema.format.message"
       }
     } else {
       throw new IllegalArgumentException("Unknown format '${schema.format}'")
@@ -264,7 +264,7 @@ class Validator {
     if (!(instance instanceof List)) return
 
     if (schema.exclusiveMinimum && instance.size() <= schema.minItems || instance.size() < schema.minItems) {
-      "does not meet minimum length of ${schema.minItems}"
+      "groovyschema.minItems.message"
     }
   }
 
@@ -277,7 +277,7 @@ class Validator {
     if (!(instance instanceof List)) return
 
     if (schema.exclusiveMaximum && instance.size() >= schema.maxItems || instance.size() > schema.maxItems) {
-      "exceeds maximum length of ${schema.maxItems}"
+      "groovyschema.maxItems.message"
     }
   }
 
@@ -290,7 +290,7 @@ class Validator {
     if (!(instance instanceof String)) return
 
     if (schema.exclusiveMinimum && instance.size() <= schema.minLength || instance.size() < schema.minLength) {
-      "does not meet minimum length of ${schema.minLength}"
+      "groovyschema.minLength.message"
     }
   }
 
@@ -303,7 +303,7 @@ class Validator {
     if (!(instance instanceof String)) return
 
     if (schema.exclusiveMaximum && instance.size() >= schema.maxLength || instance.size() > schema.maxLength) {
-      "exceeds maximum length of ${schema.maxLength}"
+      "groovyschema.maxLength.message"
     }
   }
 
@@ -316,7 +316,7 @@ class Validator {
     if (!(instance instanceof Number)) return
 
     if (schema.exclusiveMinimum && instance <= schema.minimum || instance < schema.minimum) {
-      "is less than ${schema.minimum}"
+      "groovyschema.minimum.message"
     }
   }
 
@@ -329,7 +329,7 @@ class Validator {
     if (!(instance instanceof Number)) return
 
     if (schema.exclusiveMaximum && instance >= schema.maximum || instance > schema.maximum) {
-      "is greater than ${schema.maximum}"
+      "groovyschema.maximum.message"
     }
   }
 
@@ -343,7 +343,7 @@ class Validator {
     if (schema.divisibleBy == 0) throw new IllegalArgumentException("Validation attribute 'divisibleBy' cannot be zero")
 
     if (instance % schema.divisibleBy != 0) {
-      "is not divisible by ${schema.divisibleBy}"
+      "groovyschema.divisibleBy.message"
     }
   }
 
@@ -377,7 +377,7 @@ class Validator {
       throw new IllegalArgumentException("Value for validation attribute 'type' is not supported")
     }
     if (! valid) {
-      "is not of type '${schema.type}'"
+      "groovyschema.type.message"
     }
   }
 
@@ -448,7 +448,7 @@ class Validator {
     def metaValidator = new Validator(isMetaValidating:false)
     def metaErrors = metaValidator.validate(schemaInstance, metaSchema)
     if (metaErrors.size()) {
-      throw new IllegalArgumentException("schema instance does not comply to metaschema")
+      throw new IllegalArgumentException("schema instance does not comply to meta-schema")
     }
   }
 
