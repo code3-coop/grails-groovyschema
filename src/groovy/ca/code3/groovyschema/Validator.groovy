@@ -525,7 +525,7 @@ class Validator {
       properties: [
         type: 'object',
         patternProperties: [
-          /.+/: [type:'object'] // in fact, all values of the `property` object should comply to this metaschema.
+          /.+/: [type:'object'] // in fact, all values of the `properties` object should comply to this metaschema.
         ]
       ],
 
@@ -542,7 +542,7 @@ class Validator {
       patternProperties: [
         type: 'object',
         patternProperties: [
-          /.+/: [type:'object'] // in fact, all values of the `property` object should comply to this metaschema.
+          /.+/: [type:'object'] // in fact, all values of the `patternProperties` object should comply to this metaschema.
         ]
       ],
 
