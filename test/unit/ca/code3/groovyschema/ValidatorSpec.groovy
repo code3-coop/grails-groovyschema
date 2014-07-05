@@ -124,6 +124,18 @@ class ValidatorSpec extends Specification {
     1        | [divisibleBy:2] | 1
   }
 
+  def "it throws an exception when divisibleBy:0"() {
+    setup:
+    def schema = [divisible:0]
+
+    when:
+    validator.validate(1, schema)
+
+    then:
+    def exception = thrown(IllegalArgumentException)
+    exception.message == "schema instance does not comply to meta-schema"
+  }
+
   def "it validates the `required` attribute"() {
     expect:
     validator.validate(instance, schema).size() == errCount

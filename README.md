@@ -137,7 +137,7 @@ class Validator {
 
       maximum: [type:'number'],
 
-      divisibleBy: [type:'number'],
+      divisibleBy: [type:'number', minimum:0, exclusiveMinimum:true],
 
       properties: [
         type: 'object',
