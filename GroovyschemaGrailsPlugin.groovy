@@ -15,7 +15,7 @@ class GroovyschemaGrailsPlugin {
   def description = "Declaratively validate deserialized JSON objects."
 
   // URL to the plugin's documentation
-  def documentation = "http://grails.org/plugin/groovyschema"
+  def documentation = "https://github.com/code3-coop/grails-groovyschema"
 
   // License: one of 'APACHE', 'GPL2', 'GPL3'
   def license = 'MIT'
