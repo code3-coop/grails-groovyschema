@@ -9,7 +9,7 @@ It is meant to be used with
 [JsonSlurper](http://groovy.codehaus.org/gapi/groovy/json/JsonSlurper.html) when
 validating incoming JSON content in REST API implementations.
 
-## Installing (pending approval)
+## Installing
 
 ```groovy
 compile ':groovyschema:0.1'
