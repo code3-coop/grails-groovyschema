@@ -7,20 +7,20 @@ class Validator {
   // Takes in a `schema` and a potential `instance` of it. Validates the top
   // level constraints.
 
-  def validate(instance, schema) {
-    if (isMetaValidating) { metaValidate(schema, META_SCHEMA) }
+  def validate(instance, schema, path = "this") {
+    if (isMetaValidating) { metaValidate(schema, META_SCHEMA, "schema") }
 
     def errors = schema.findAll(relevantProperties).collect { key, val ->
       def validator = this["validate${key.capitalize()}"]
       if (validator) {
-        def err = validator(instance, schema)
-        (err instanceof String || err instanceof GString) ? mkError(err, instance, schema) : err
+        def err = validator(instance, schema, path)
+        (err instanceof String || err instanceof GString) ? mkError(err, instance, schema, path) : err
       } else {
         throw new IllegalArgumentException("Unknown validation attribute '${key}'")
       }
     }.findAll().flatten()
 
-    if (isMetaValidating) { metaValidate(errors, ERRORS_SCHEMA) }
+    if (isMetaValidating) { metaValidate(errors, ERRORS_SCHEMA, "errors") }
     errors
   }
 
@@ -28,8 +28,8 @@ class Validator {
   // instance against all the `allOf` schemas. The instance is valid only if it
   // conforms to all. Returns the validation error messages, if any.
 
-  private validateAllOf = { instance, schema ->
-    def errors = collectValidations(instance, schema.allOf).findAll()
+  private validateAllOf = { instance, schema, path ->
+    def errors = collectValidations(instance, schema.allOf, path).findAll()
 
     if (errors.size() > 0) {
       "groovyschema.allOf.message"
@@ -40,8 +40,8 @@ class Validator {
   // instance against all the `anyOf` schemas. The instance is valid if it
   // conforms to at least one. Returns the validation error messages, if any.
 
-  private validateAnyOf = { instance, schema ->
-    def errors = collectValidations(instance, schema.anyOf).findAll()
+  private validateAnyOf = { instance, schema, path ->
+    def errors = collectValidations(instance, schema.anyOf, path).findAll()
 
     if (errors.size() == schema.anyOf.size()) {
       "groovyschema.anyOf.message"
@@ -52,8 +52,8 @@ class Validator {
   // instance against all the `oneOf` schemas. The instance is valid if it
   // conforms to exactly one. Returns the validation error messages, if any.
 
-  private validateOneOf = { instance, schema ->
-    def errors = collectValidations(instance, schema.oneOf).findAll()
+  private validateOneOf = { instance, schema, path ->
+    def errors = collectValidations(instance, schema.oneOf, path).findAll()
 
     if (schema.oneOf.size() - errors.size() != 1) {
       "groovyschema.oneOf.message"
@@ -64,9 +64,9 @@ class Validator {
   // instance against all the `not` schemas. The instance is valid only if it
   // *does not* conform to all. Returns the validation error message, if any.
 
-  private validateNot = { instance, schema ->
+  private validateNot = { instance, schema, path ->
     def prohibitedSchemas = schema.not instanceof List ? schema.not : [schema.not]
-    def errors = collectValidations(instance, prohibitedSchemas).findAll()
+    def errors = collectValidations(instance, prohibitedSchemas, path).findAll()
 
     if (errors.size() != prohibitedSchemas.size()) {
       "groovyschema.not.message"
@@ -79,7 +79,7 @@ class Validator {
   // to which the passed-in instance must comply to. Returns the validation
   // error message, if any.
 
-  private validateDependencies = { instance, schema ->
+  private validateDependencies = { instance, schema, path ->
     if (!(instance instanceof Map)) return
 
     schema.dependencies.collect { property, description ->
@@ -87,10 +87,10 @@ class Validator {
       if (dependency != null) {
         if (description instanceof String || description instanceof List) {
           if (! description.every { instance[it] != null }) {
-            mkError("groovyschema.dependencies.message", instance, schema)
+            mkError("groovyschema.dependencies.message", instance, schema, path)
           }
         } else {
-          this.validate(instance, description)
+          this.validate(instance, description, path)
         }
       }
     }.findAll().flatten()
@@ -100,7 +100,7 @@ class Validator {
   // instance is one of the enumerated values. Returns the validation error
   // message, if any.
 
-  private validateEnum = { instance, schema ->
+  private validateEnum = { instance, schema, path ->
     if (! schema.enum.any { deepEqual(it, instance) } && instance != null) {
       "groovyschema.enum.message"
     }
@@ -110,7 +110,7 @@ class Validator {
   // instance is equal to the `fixed` value. Returns the validation error
   // message, if any.
 
-  private validateFixed = { instance, schema ->
+  private validateFixed = { instance, schema, path ->
     if (! deepEqual(schema.fixed, instance)) {
       "groovyschema.fixed.message"
     }
@@ -119,7 +119,7 @@ class Validator {
   // Takes in a `schema` and a potential `instance` of it. Validates that items
   // in the instance are unique. Returns the validation error message, if any.
 
-  private validateUniqueItems = { instance, schema ->
+  private validateUniqueItems = { instance, schema, path ->
     if (!(instance instanceof List)) return
     if (! schema.uniqueItems) return
 
@@ -137,13 +137,13 @@ class Validator {
   // allowed only if the `additionalItems` property is `true`. Returns the
   // validation error message, if any.
 
-  private validateItems = { instance, schema ->
+  private validateItems = { instance, schema, path ->
     if (!(instance instanceof List)) return
 
     def items = instance
     if (schema.items instanceof Map) {
       def itemSchema = schema.items
-      items.collect { item -> this.validate(item, itemSchema) }.findAll().flatten()
+      items.collect { item -> this.validate(item, itemSchema, path) }.findAll().flatten()
     } else if (items.size() > schema.items.size() && !schema.additionalItems) {
       "groovyschema.additionalItems.message"
     } else {
@@ -151,7 +151,7 @@ class Validator {
       [schemas, items].transpose().collect {
         def itemSchema = it[0]
         def item = it[1]
-        this.validate(item, itemSchema)
+        this.validate(item, itemSchema, path)
       }
     }
   }
@@ -161,13 +161,13 @@ class Validator {
   // instance properties will be validated. Returns the validation error
   // message, if any.
 
-  private validatePatternProperties = { instance, schema ->
+  private validatePatternProperties = { instance, schema, path ->
     if (!(instance instanceof Map)) return
 
     instance.collect { property, propertyValue ->
       schema.patternProperties.collect { pattern, propertySchema ->
         if (property ==~ pattern) {
-          this.validate(propertyValue, propertySchema)
+          this.validate(propertyValue, propertySchema, path)
         }
       }.findAll().flatten()
     }.findAll().flatten()
@@ -180,7 +180,7 @@ class Validator {
   // a list of valid additional properties or a schema describing additional
   // properties. Returns the validation error message, if any.
 
-  private validateAdditionalProperties = { instance, schema ->
+  private validateAdditionalProperties = { instance, schema, path ->
     if (!(instance instanceof Map)) return
     if (schema.additionalProperties == true) return
 
@@ -200,7 +200,7 @@ class Validator {
       def additional = given - possible
 
       additional.collect { property ->
-        this.validate(instance[property], additionalPropertySchema)
+        this.validate(instance[property], additionalPropertySchema, path)
       }.findAll().flatten()
     }
   }
@@ -209,18 +209,18 @@ class Validator {
   // given properties and calls `validate` for each passing along its (sub-)
   // schema. Returns the validation error message, if any.
 
-  private validateProperties = { instance, schema ->
+  private validateProperties = { instance, schema, path ->
     if (!(instance instanceof Map)) return
 
     schema.properties.collect { property, propertySchema ->
-      this.validate(instance[property], propertySchema)
+      this.validate(instance[property], propertySchema, path)
     }.findAll().flatten()
   }
 
   // Takes in a `schema` and a potential `instance` of it. Validates that the
   // given instance is present. Returns the validation error message, if any.
 
-  private validateRequired = { instance, schema ->
+  private validateRequired = { instance, schema, path ->
     if (schema.required && instance == null) {
       "groovyschema.required.message"
     }
@@ -230,7 +230,7 @@ class Validator {
   // given instance matches the regular expression. Returns the validation error
   // message, if any.
 
-  private validatePattern = { instance, schema ->
+  private validatePattern = { instance, schema, path ->
     if (!(instance instanceof String)) return
 
     if (!(instance ==~ schema.pattern)) {
@@ -242,7 +242,7 @@ class Validator {
   // given instance matches the regular expression referenced by the `format`
   // attribute. Returns the validation error message, if any.
 
-  private validateFormat = { instance, schema ->
+  private validateFormat = { instance, schema, path ->
     if (!(instance instanceof String)) return
 
     def format = this.formats[schema.format]
@@ -260,7 +260,7 @@ class Validator {
   // Takes into account the `exclusiveMinimum` schema option. Returns the
   // validation error message, if any.
 
-  private validateMinItems = { instance, schema ->
+  private validateMinItems = { instance, schema, path ->
     if (!(instance instanceof List)) return
 
     if (schema.exclusiveMinimum && instance.size() <= schema.minItems || instance.size() < schema.minItems) {
@@ -273,7 +273,7 @@ class Validator {
   // Takes into account the `exclusiveMaximum` schema option. Returns the
   // validation error message, if any.
 
-  private validateMaxItems = { instance, schema ->
+  private validateMaxItems = { instance, schema, path ->
     if (!(instance instanceof List)) return
 
     if (schema.exclusiveMaximum && instance.size() >= schema.maxItems || instance.size() > schema.maxItems) {
@@ -286,7 +286,7 @@ class Validator {
   // Takes into account the `exclusiveMinimum` schema option. Returns the
   // validation error message, if any.
 
-  private validateMinLength = { instance, schema ->
+  private validateMinLength = { instance, schema, path ->
     if (!(instance instanceof String)) return
 
     if (schema.exclusiveMinimum && instance.size() <= schema.minLength || instance.size() < schema.minLength) {
@@ -299,7 +299,7 @@ class Validator {
   // Takes into account the `exclusiveMaximum` schema option. Returns the
   // validation error message, if any.
 
-  private validateMaxLength = { instance, schema ->
+  private validateMaxLength = { instance, schema, path ->
     if (!(instance instanceof String)) return
 
     if (schema.exclusiveMaximum && instance.size() >= schema.maxLength || instance.size() > schema.maxLength) {
@@ -312,7 +312,7 @@ class Validator {
   // into account the `exclusiveMinimum` schema option. Returns the validation
   // error message, if any.
 
-  private validateMinimum = { instance, schema ->
+  private validateMinimum = { instance, schema, path ->
     if (!(instance instanceof Number)) return
 
     if (schema.exclusiveMinimum && instance <= schema.minimum || instance < schema.minimum) {
@@ -325,7 +325,7 @@ class Validator {
   // Takes into account the `exclusiveMaximum` schema option. Returns the
   // validation error message, if any. 
 
-  private validateMaximum = { instance, schema ->
+  private validateMaximum = { instance, schema, path ->
     if (!(instance instanceof Number)) return
 
     if (schema.exclusiveMaximum && instance >= schema.maximum || instance > schema.maximum) {
@@ -338,7 +338,7 @@ class Validator {
   // `divisibleBy`. Returns the validation error message, if any. Throws
   // IllegalArgumentException if the `divisibleBy` attribute is 0.
 
-  private validateDivisibleBy = { instance, schema ->
+  private validateDivisibleBy = { instance, schema, path ->
     if (!(instance instanceof Number)) return
     if (schema.divisibleBy == 0) throw new IllegalArgumentException("Validation attribute 'divisibleBy' cannot be zero")
 
@@ -352,7 +352,7 @@ class Validator {
   // validation error message, if any. Throws IllegalArgumentException if the
   // `type` attribute value isn't supported.
 
-  private validateType = { instance, schema ->
+  private validateType = { instance, schema, path ->
     if (schema.type == 'any' || instance == null && schema.type != 'null') return
 
     def valid = false
@@ -384,9 +384,10 @@ class Validator {
   // When `message` is truthy, builds and returns an error object from the
   // passed-in parameters.
 
-  private mkError(message, instance, schema) {
+  private mkError(message, instance, schema, path) {
     if (message) {
       [
+        path: path,
         instance: instance,
         schema: schema,
         message: message.toString(),
@@ -397,8 +398,8 @@ class Validator {
   // Takes an instance and a list of schemas. Validates the instance against all
   // of them and returns a list of return values.
 
-  private collectValidations(instance, schemas) {
-    schemas.collect { this.validate(instance, it) }
+  private collectValidations(instance, schemas, path) {
+    schemas.collect { this.validate(instance, it, path) }
   }
 
   // Regular expressions used with the `format` validation attribute.
@@ -444,9 +445,9 @@ class Validator {
     }
   }
 
-  private metaValidate(schemaInstance, metaSchema) {
+  private metaValidate(schemaInstance, metaSchema, path) {
     def metaValidator = new Validator(isMetaValidating:false)
-    def metaErrors = metaValidator.validate(schemaInstance, metaSchema)
+    def metaErrors = metaValidator.validate(schemaInstance, metaSchema, path)
     if (metaErrors.size()) {
       throw new IllegalArgumentException("schema instance does not comply to meta-schema")
     }
@@ -461,6 +462,7 @@ class Validator {
       required: true,
       additionalProperties: false,
       properties: [
+        path: [type:'string', required:true],
         instance: [type:'any'], // the validated (sub-)instance e.g. "abc"
         schema: [type:'object', required:true], // the associated (sub-)schema e.g. [format:'email']
         message: [

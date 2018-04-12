@@ -18,30 +18,31 @@ class ValidatorSpec extends Specification {
     errors[0].message == message
     errors[0].schema == schema
     errors[0].instance == instance
+    errors[0].path == path
 
     where:
-    schema                            | instance | message
-    [type:'string']                   | 0        | "groovyschema.type.message"
-    [divisibleBy:2]                   | 3        | "groovyschema.divisibleBy.message"
-    [maximum:0]                       | 1        | "groovyschema.maximum.message"
-    [minimum:1]                       | 0        | "groovyschema.minimum.message"
-    [maxLength:0]                     | "a"      | "groovyschema.maxLength.message"
-    [minLength:1]                     | ""       | "groovyschema.minLength.message"
-    [maxItems:0]                      | [1]      | "groovyschema.maxItems.message"
-    [minItems:1]                      | []       | "groovyschema.minItems.message"
-    [format:'email']                  | ""       | "groovyschema.format.message"
-    [pattern:/a+/]                    | "b"      | "groovyschema.pattern.message"
-    [required:true]                   | null     | "groovyschema.required.message"
-    [additionalProperties:false]      | [a:1]    | "groovyschema.additionalProperties.message"
-    [additionalItems:false, items:[]] | [1]      | "groovyschema.additionalItems.message"
-    [uniqueItems:true]                | [1, 1]   | "groovyschema.uniqueItems.message"
-    [fixed:"a"]                       | "b"      | "groovyschema.fixed.message"
-    [enum:['a', 'b']]                 | ''       | "groovyschema.enum.message"
-    [dependencies:[a:'b']]            | [a:1]    | "groovyschema.dependencies.message"
-    [not:[[fixed:'a']]]               | 'a'      | "groovyschema.not.message"
-    [oneOf:[[fixed:'a']]]             | 'b'      | "groovyschema.oneOf.message"
-    [anyOf:[[fixed:'a']]]             | 'b'      | "groovyschema.anyOf.message"
-    [allOf:[[fixed:'a']]]             | 'b'      | "groovyschema.allOf.message"
+    schema                            | instance | path | message
+    [type:'string']                   | 0        | "this" | "groovyschema.type.message"
+    [divisibleBy:2]                   | 3        | "this" | "groovyschema.divisibleBy.message"
+    [maximum:0]                       | 1        | "this" | "groovyschema.maximum.message"
+    [minimum:1]                       | 0        | "this" | "groovyschema.minimum.message"
+    [maxLength:0]                     | "a"      | "this" | "groovyschema.maxLength.message"
+    [minLength:1]                     | ""       | "this" | "groovyschema.minLength.message"
+    [maxItems:0]                      | [1]      | "this" | "groovyschema.maxItems.message"
+    [minItems:1]                      | []       | "this" | "groovyschema.minItems.message"
+    [format:'email']                  | ""       | "this" | "groovyschema.format.message"
+    [pattern:/a+/]                    | "b"      | "this" | "groovyschema.pattern.message"
+    [required:true]                   | null     | "this" | "groovyschema.required.message"
+    [additionalProperties:false]      | [a:1]    | "this" | "groovyschema.additionalProperties.message"
+    [additionalItems:false, items:[]] | [1]      | "this" | "groovyschema.additionalItems.message"
+    [uniqueItems:true]                | [1, 1]   | "this" | "groovyschema.uniqueItems.message"
+    [fixed:"a"]                       | "b"      | "this" | "groovyschema.fixed.message"
+    [enum:['a', 'b']]                 | ''       | "this" | "groovyschema.enum.message"
+    [dependencies:[a:'b']]            | [a:1]    | "this" | "groovyschema.dependencies.message"
+    [not:[[fixed:'a']]]               | 'a'      | "this" | "groovyschema.not.message"
+    [oneOf:[[fixed:'a']]]             | 'b'      | "this" | "groovyschema.oneOf.message"
+    [anyOf:[[fixed:'a']]]             | 'b'      | "this" | "groovyschema.anyOf.message"
+    [allOf:[[fixed:'a']]]             | 'b'      | "this" | "groovyschema.allOf.message"
   }
 
   def "it validates the `type` attribute"() {
