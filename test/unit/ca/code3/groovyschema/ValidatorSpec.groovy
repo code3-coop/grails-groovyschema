@@ -21,7 +21,7 @@ class ValidatorSpec extends Specification {
     errors[0].path == path
 
     where:
-    schema                            | instance | path | message
+    schema                            | instance | path   | message
     [type:'string']                   | 0        | "this" | "groovyschema.type.message"
     [divisibleBy:2]                   | 3        | "this" | "groovyschema.divisibleBy.message"
     [maximum:0]                       | 1        | "this" | "groovyschema.maximum.message"
@@ -636,6 +636,51 @@ class ValidatorSpec extends Specification {
     [a:[[b:1]], d:0]              | 0
   }
 
+  def "it calculates the path for properties"() {
+    setup:
+    def schema = [
+      type: 'object',
+      properties: [
+        foo: [type:'string', pattern:/^fo+$/, required:true],
+        bar: [type:'number', minimum:10],
+        qux: [
+          type: 'object',
+          properties: [
+            bar: [type:'number']
+          ]
+        ]
+      ]
+    ]
+    
+    expect:
+    validator.validate(instance, schema)[0].path == path
+
+    where:
+    instance                           | path
+    [foo:1]                            | 'this.foo'
+    [bar:10]                           | 'this.foo'
+    [foo:'foo', bar:'s']               | 'this.bar'
+    [foo:'foo', bar:10, qux:[bar:'s']] | 'this.qux.bar'
+  }
+
+  def "it calculates the path for items"() {
+    setup:
+    def schema = [
+      type: 'array',
+      items: itemSchema
+    ]
+
+    expect:
+    validator.validate(instance, schema)[0].path == path
+
+    where:
+    itemSchema                                      | instance         | path
+    [type:'number']                                 | ['s', 2, 3]      | "this.0"
+    [type:'number']                                 | [1, 2, 's']      | "this.2"
+    [type:'object', properties:[a:[type:'number']]] | [[a:1], [a:'s']] | "this.1.a"
+    [[type:'number'], [type:'string']]              | [1, 2]           | "this.1"
+  }
+
   def "it meta-meta validates"() {
     when:
     def metaMetaErrors = validator.validate(Validator.META_SCHEMA, Validator.META_SCHEMA)
@@ -645,5 +690,4 @@ class ValidatorSpec extends Specification {
     metaMetaErrors.size() == 0
     metaErrors.size() == 0
   }
-
 }

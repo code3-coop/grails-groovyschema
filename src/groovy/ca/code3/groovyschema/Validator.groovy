@@ -90,7 +90,7 @@ class Validator {
             mkError("groovyschema.dependencies.message", instance, schema, path)
           }
         } else {
-          this.validate(instance, description, path)
+          this.validate(instance, description, "${path}.${property}")
         }
       }
     }.findAll().flatten()
@@ -143,16 +143,22 @@ class Validator {
     def items = instance
     if (schema.items instanceof Map) {
       def itemSchema = schema.items
-      items.collect { item -> this.validate(item, itemSchema, path) }.findAll().flatten()
+      def validations = []
+      items.eachWithIndex { item, idx ->
+        validations.push(this.validate(item, itemSchema, "${path}.${idx}"))
+      }
+      validations.findAll().flatten()
     } else if (items.size() > schema.items.size() && !schema.additionalItems) {
       "groovyschema.additionalItems.message"
     } else {
       def schemas = schema.items ?: []
-      [schemas, items].transpose().collect {
+      def validations = []
+      [schemas, items].transpose().eachWithIndex { it, idx ->
         def itemSchema = it[0]
         def item = it[1]
-        this.validate(item, itemSchema, path)
+        validations.push(this.validate(item, itemSchema, "${path}.${idx}"))
       }
+      validations.findAll().flatten()
     }
   }
 
@@ -167,7 +173,7 @@ class Validator {
     instance.collect { property, propertyValue ->
       schema.patternProperties.collect { pattern, propertySchema ->
         if (property ==~ pattern) {
-          this.validate(propertyValue, propertySchema, path)
+          this.validate(propertyValue, propertySchema, "${path}.${property}")
         }
       }.findAll().flatten()
     }.findAll().flatten()
@@ -200,7 +206,7 @@ class Validator {
       def additional = given - possible
 
       additional.collect { property ->
-        this.validate(instance[property], additionalPropertySchema, path)
+        this.validate(instance[property], additionalPropertySchema, "${path}.${property}")
       }.findAll().flatten()
     }
   }
@@ -213,7 +219,7 @@ class Validator {
     if (!(instance instanceof Map)) return
 
     schema.properties.collect { property, propertySchema ->
-      this.validate(instance[property], propertySchema, path)
+      this.validate(instance[property], propertySchema, "${path}.${property}")
     }.findAll().flatten()
   }
 
@@ -358,7 +364,7 @@ class Validator {
     def valid = false
     switch (schema.type) {
     case 'string':
-      valid = instance instanceof String; break
+      valid = instance instanceof String || instance instanceof GString; break
     case 'number':
       valid = instance instanceof Number; break
     case 'integer':
