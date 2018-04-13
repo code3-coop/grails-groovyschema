@@ -72,6 +72,7 @@ class Validator {
       required: true,
       additionalProperties: false,
       properties: [
+        path: [type:'string', required:true],
         instance: [type:'any'], // the validated (sub-)instance e.g. "abc"
         schema: [type:'object', required:true], // the associated (sub-)schema e.g. [format:'email']
         message: [
