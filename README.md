@@ -290,6 +290,19 @@ Validates that the instance is divisible by the attribute value.
 
 ## Map-specific validations attributes
 
+### required
+
+Can either be a boolean or a list of strings. When `true`, it validates
+that the map itself is not `null`. When it is a list of strings, each string
+specifies a key name for which its value in the map must not be `null`.
+
+```groovy
+def schema = [
+  type: 'object',
+  required: ['name', 'email'],
+]
+```
+
 ### properties
 
 Validates a schema for each of the instance's entries. For each entry in the
@@ -304,9 +317,10 @@ that matches the predefined `email` regular expression.
 ```groovy
 def schema = [
   type: 'object',
+  required: ['name', 'email'],
   properties: [
-    name: [type:'string', required:true],
-    email: [type:'string', format:'email', required:true],
+    name: [type:'string'],
+    email: [type:'string', format:'email'],
   ]
 ]
 ```
@@ -321,10 +335,11 @@ additional properties.
 ```groovy
 def schema = [
   type: 'object',
+  required: ['name', 'email'],
   properties: [
-    name: [type:'string', required:true],
-    email: [type:'string', format:'email', required:true],
-  ],
+    name: [type:'string'],
+    email: [type:'string', format:'email'],
+  ]
   additionalProperties: ['givenName', 'familyName']
 ]
 ```
