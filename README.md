@@ -12,7 +12,7 @@ validating incoming JSON content in REST API implementations.
 ## Installing
 
 ```groovy
-compile ':groovyschema:0.2'
+compile ':groovyschema:0.4'
 ```
 
 ## Usage

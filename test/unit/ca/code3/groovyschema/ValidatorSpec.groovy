@@ -675,10 +675,52 @@ class ValidatorSpec extends Specification {
 
     where:
     itemSchema                                      | instance         | path
-    [type:'number']                                 | ['s', 2, 3]      | "this.0"
-    [type:'number']                                 | [1, 2, 's']      | "this.2"
-    [type:'object', properties:[a:[type:'number']]] | [[a:1], [a:'s']] | "this.1.a"
-    [[type:'number'], [type:'string']]              | [1, 2]           | "this.1"
+    [type:'number']                                 | ['s', 2, 3]      | 'this.0'
+    [type:'number']                                 | [1, 2, 's']      | 'this.2'
+    [type:'object', properties:[a:[type:'number']]] | [[a:1], [a:'s']] | 'this.1.a'
+    [[type:'number'], [type:'string']]              | [1, 2]           | 'this.1'
+  }
+
+  def "it allows the object schema do specify required attributes"() {
+    setup:
+    def schema = [
+      type: 'object',
+      required: required,
+    ]
+
+    expect:
+    def errors = validator.validate(instance, schema).size() == errCount
+
+    where:
+    required       | instance   | errCount
+    false          | null       | 0
+    true           | [:]        | 0
+    ['foo']        | [foo:1]    | 0
+    ['foo']        | [foo:null] | 1
+    ['foo']        | [:]        | 1
+    ['foo', 'bar'] | null       | 1
+    ['foo', 'bar'] | [:]        | 2
+    ['foo', 'bar'] | [qux:1]    | 2
+    ['foo', 'bar'] | [foo:1]    | 1
+    ['foo', 'bar'] | [bar:1]    | 1
+  }
+
+  def "it dtermines the path for required properties"() {
+    setup:
+    def schema = [
+      type: 'object',
+      required: required,
+    ]
+
+    expect:
+    validator.validate(instance, schema)[0].path == path
+
+    where:
+    required       | instance | path
+    ['foo', 'bar'] | [foo:1]  | 'this.bar'
+    ['foo', 'bar'] | [bar:1]  | 'this.foo'
+    ['foo', 'bar'] | [:]      | 'this.foo'
+    ['foo', 'bar'] | null     | 'this'
   }
 
   def "it meta-meta validates"() {

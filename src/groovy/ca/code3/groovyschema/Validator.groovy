@@ -227,8 +227,14 @@ class Validator {
   // given instance is present. Returns the validation error message, if any.
 
   private validateRequired = { instance, schema, path ->
-    if (schema.required && instance == null) {
-      "groovyschema.required.message"
+    if (schema.required) {
+      if (instance == null) {
+        "groovyschema.required.message"
+      } else if (instance instanceof Map && schema.required instanceof List) {
+        schema.required.collect { requiredProperty ->
+          this.validate(instance[requiredProperty], [required:true], "${path}.${requiredProperty}")
+        }.findAll().flatten()
+      }
     }
   }
 
@@ -508,7 +514,12 @@ class Validator {
     additionalProperties: false,
     properties: [
 
-      required: [type:'boolean'],
+      required: [
+        anyOf: [
+          [type:'boolean'],
+          [type:'array', items:[type:'string']],
+        ]
+      ],
 
       type: [type:'string', enum:['string', 'number', 'integer', 'boolean', 'array', 'null', 'any', 'object']],
 
