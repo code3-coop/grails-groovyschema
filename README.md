@@ -295,13 +295,22 @@ Validates that the instance is divisible by the attribute value.
 Can either be a boolean or a list of key names. When `true`, it validates that
 the map itself is not `null`.
 
-When it is a list of key names, it validates the the map must is not `null` and
+When it is a list of key names, it validates that the map is not `null` and also
 that the value associated to each key name is not `null`.
 
 ```groovy
 def schema = [
   type: 'object',
   required: ['name', 'email']
+]
+
+def equivalent = [
+  type: 'object',
+  required: true,
+  properties: [
+    name: [ required:true ],
+    email: [ required:true ],
+  ]
 ]
 ```
 
